@@ -1,5 +1,8 @@
 Revision history for Perl extension Video::Capture::V4l.
 
+0.225 Thu Mar  3 18:00:52 CET 2005
+	- change of contact address.
+
 0.224 Sun Jun 13 18:02:32 CEST 2004
 	- fix some compile bugs, very very small documentation updates.
         - Video::Capture::V4l2 might replace this module in the future,

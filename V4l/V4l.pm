@@ -9,7 +9,7 @@ require DynaLoader;
 
 use Fcntl;
 
-$VERSION = 0.224;
+$VERSION = 0.225;
 
 @ISA = qw(Exporter DynaLoader);
 
@@ -268,7 +268,7 @@ but you rarely need to use them.
 
 =head1 AUTHOR
 
-Marc Lehmann <pcg@goof.com>
+Marc Lehmann <schmorp@schmorp.de>
 
 =head1 LICENSE
 

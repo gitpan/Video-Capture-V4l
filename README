@@ -72,7 +72,7 @@ Exported constants
       TYPE_TUNER
 
 AUTHOR
-    Marc Lehmann <pcg@goof.com>
+    Marc Lehmann <schmorp@schmorp.de>
 
 LICENSE
     This module is available under GPL only (see the file COPYING for

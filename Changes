@@ -1,17 +1,28 @@
 Revision history for Perl extension Video::Capture::V4l.
 
-0.2  Wed Dec  1 21:21:02 CET 1999
+0.22  Thu May 11 03:22:52 CEST 2000
+	- changed VBI_VT format so that the full data is always returned in
+          slot #3.
+        - updated GPL to version 2.
+        - minor fixes.
+
+0.21  Sun Apr 16 11:13:04 CEST 2000
+        - moved scripts to the example subdir, fixed a few bugs, writing an
+          article in tpj ;)
+        - added RTjpeg codec module.
+
+0.20  Wed Dec  1 21:21:02 CET 1999
 	- fixed segfault problems due to non-reentrant malloc on many systems
           (by pre-allocating lotsamemory of cousre ;).
 
-0.11 Wed Nov 24 18:45:23 CET 1999
+0.11  Wed Nov 24 18:45:23 CET 1999
 	- added epgview-simple (hack!), a regularly updated "coming next" screen.
         - added epgview, which requires Curses and is much nicer.
         - made it compile with perl-5.005_03.
         - removed epgview-simple again ;)
         - fixed "no dot in PATH" problem in V4l.
 
-0.1   Sun Oct 24 21:18:00 CEST 1999
+0.10  Sun Oct 24 21:18:00 CEST 1999
 	- added Video::XawTV.
         - backlog(0) now cancels vbi frame grabbing.
         - added autotune.

@@ -14,6 +14,10 @@
 #define NEED_newCONSTSUB
 #include "../gppport.h"
 
+#ifndef pTHX_
+#define pTHX_
+#endif
+
 #define XSRETURN_bool(bool) if (bool) XSRETURN_YES; else XSRETURN_NO;
 
 #define VBI_BPF (2048*32)
@@ -63,15 +67,15 @@ framesize (unsigned int format, unsigned int pixels)
   if (format==VIDEO_PALETTE_UYVY)	return pixels*2;
   if (format==VIDEO_PALETTE_YUYV)	return pixels*2;
   /* everything below is very probably WRONG */
-  if (format==VIDEO_PALETTE_PLANAR)	return pixels*0;
-  if (format==VIDEO_PALETTE_RAW)	return pixels*0;
   if (format==VIDEO_PALETTE_YUV410P)	return pixels*2;
   if (format==VIDEO_PALETTE_YUV411)	return pixels*2;
   if (format==VIDEO_PALETTE_YUV411P)	return pixels*2;
-  if (format==VIDEO_PALETTE_YUV420)	return pixels*2;
-  if (format==VIDEO_PALETTE_YUV420P)	return pixels*2;
+  if (format==VIDEO_PALETTE_YUV420)	return pixels*3/2;
+  if (format==VIDEO_PALETTE_YUV420P)	return pixels*3/2;
   if (format==VIDEO_PALETTE_YUV422)	return pixels*2;
-  if (format==VIDEO_PALETTE_YUV422P)	return pixels*3/2;
+  if (format==VIDEO_PALETTE_YUV422P)	return pixels*2;
+  if (format==VIDEO_PALETTE_PLANAR)	return pixels*2;
+  if (format==VIDEO_PALETTE_RAW)	return pixels*8;
   return 0;
 }
 
@@ -82,7 +86,7 @@ struct private {
 };
 
 static int
-private_free (SV *obj, MAGIC *mg)
+private_free (pTHX_ SV *obj, MAGIC *mg)
 {
   struct private *p = (struct private *)mg->mg_ptr;
   munmap (p->mmap_base, p->vm.size);
@@ -138,6 +142,16 @@ static pthread_cond_t vbi_cond = PTHREAD_COND_INITIALIZER;
 static void *
 vbi_snatcher_thread (void *arg)
 {
+  /* try to become a realtime process. */
+#ifdef _POSIX_THREAD_PRIORITY_SCHEDULING
+  {
+    struct sched_param sp;
+
+    sp.sched_priority = (sched_get_priority_max (SCHED_FIFO)
+                         + sched_get_priority_min (SCHED_FIFO)) / 2 - 1;
+    pthread_setschedparam (pthread_self (), SCHED_FIFO, &sp);
+  }
+#endif
   for(;;)
     {
       vbi_frame *next;
@@ -167,10 +181,10 @@ vbi_snatcher_thread (void *arg)
         }
       else 
         {
-          static struct timeval to = { 0, 1000000 / 100 }; /* skip almost a frame */
+          static struct timespec to = { 0, 1000000000 / 70 }; /* skip almost a frame */
 
           pthread_mutex_unlock (&vbi_lock);
-          select (0, 0, 0, 0, &to);
+          nanosleep (&to, 0);
         }
     }
 }
@@ -226,10 +240,11 @@ backlog(self,backlog)
   	SV *	self
         unsigned int	backlog
         CODE:
-
+{
         while (vbi_max != backlog)
           {
             vbi_frame *f;
+
             pthread_mutex_lock (&vbi_lock);
 
             if (vbi_max < backlog)
@@ -241,9 +256,9 @@ backlog(self,backlog)
               }
             else
               {
-                f = vbi_free;
-                if (f)
+                if (vbi_free)
                   {
+                    f = vbi_free;
                     vbi_free = vbi_free->next;
                     free (f);
                     vbi_max--;
@@ -274,11 +289,14 @@ backlog(self,backlog)
             while (vbi_head)
               {
                 vbi_frame *next = vbi_head->next;
+
                 free (vbi_head);
                 vbi_head = next;
               }
+
             vbi_tail = 0;
           }
+}
 
 int
 queued(self)
@@ -543,6 +561,29 @@ BOOT:
 	newCONSTSUB(stash,"TYPE_TELETEXT",	newSViv(VID_TYPE_TELETEXT));
 	newCONSTSUB(stash,"TYPE_TUNER",	newSViv(VID_TYPE_TUNER));
 }
+
+void
+bgr2rgb(fr)
+	SV *	fr
+        CODE:
+        u8 mfr = 255, max = 0;
+        u8 *src, *dst, *end;
+
+        end = SvEND (fr);
+        dst = SvPV_nolen (fr);
+
+        for (src = SvPV_nolen (fr); src < end; src++)
+          {
+            if (*src > max) max = *src;
+            if (*src < mfr) mfr = *src;
+          }
+
+        if (max != mfr)
+          for (src = SvPV_nolen (fr); src < end; )
+              *dst++ = ((UI)*src++ - mfr) * 255 / (max-mfr);
+}
+	OUTPUT:
+        fr
 
 SV *
 reduce2(fr,w)

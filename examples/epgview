@@ -180,10 +180,28 @@ sub show_current {
              strftime("%H:%M", localtime $start), strftime("%H:%M (%d)", localtime $stop),
              int (($start-$now)/60),
              $db{ai}{networks}[$_->{netwop_no}]{netwop_name};
-      my $si = $shortinfo ? $_->{shortinfo} : ""; $si =~ s/(.{40})/$1 /g;
-      #my $li = $_->{longinfo};  $li =~ s/(.{40})/$1 /g;
-      addttstr ($_->{title}." $si", $lines);
-      #addttstr ($_->{longinfo}, $lines);
+
+      my $si;
+      if ($shortinfo) {
+         unless ($_->{sinfo}) {
+            $si = delete $_->{shortinfo};
+            my $li = delete $_->{longinfo};
+            for ($si, $li) {
+               s/(.{40})/$1 /g;
+               s/\s\s+/ /g;
+            }
+            for (my $x = length($si); $x; $x--) {
+               if (substr ($si, -$x) eq substr ($li, 0, $x)) {
+                  substr ($si, -$x) = $li;
+                  last;
+               }
+            }
+            $si =~ s/[\x00-\x20]+$//;
+            $_->{sinfo} = $si;
+         }
+         $si = $_->{sinfo};
+      }
+      addttstr ($_->{title}."#$si", $lines);
 
       addch ("\n");
       last unless --$lines;

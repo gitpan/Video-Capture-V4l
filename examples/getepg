@@ -155,7 +155,7 @@ package main;
 $vbi = new Video::Capture::V4l::VBI or die;
 
 # the next line is optional (it enables buffering)
-$vbi->backlog(75); # max. 2.5 seconds backlog (~2300kB)
+$vbi->backlog(150); # max. 5 seconds backlog (~4.6Mb)
 
 $inp_fd = fileno STDIN;
 $vbi_fd = $vbi->fileno;

@@ -2,9 +2,6 @@
 
 use Video::Capture::V4l;
 use Time::HiRes 'time';
-use PDL;
-use PDL::Image2D;
-use PDL::IO::Pnm;
 
 $grab = new Video::Capture::V4l;
 

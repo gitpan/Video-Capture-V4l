@@ -89,15 +89,15 @@ sub feed(@) {
       if ($_->[0] == VBI_VT) {
          my $y = $_->[2];
          if ($y == 0) {
-            if ($self->{curpage}) {
-               if ($_->[4] & VTX_C11 || ($self->{curpage}->{page} ^ $_->[3]) & 0xf00) {
+            if (defined $self->{curpage}{page}) {
+               if ($_->[5] & VTX_C11 || ($self->{curpage}->{page} ^ $_->[4]) & 0xf00) {
                   $self->enter_page($self->{curpage}) unless ($self->{curpage}->{page} & 0xff) == 0xff;
                }
             }
             $self->{curpage} = {
-               page   => $_->[3],
-               ctrl   => $_->[4],
-               packet => ["        ".$_->[5]],
+               packet => [$_->[3]],
+               page   => $_->[4],
+               ctrl   => $_->[5],
             };
          } elsif($y<=25) {
             $self->{curpage}{packet}[$y] = $_->[3];

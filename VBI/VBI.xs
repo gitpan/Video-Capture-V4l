@@ -107,7 +107,7 @@ static u8 unhamtab[256] = {
 
 #define FREQ_VT_PAL	6.9375
 #define FREQ_VT_NTSC	5.72725
-#define FREQ_VT		FREQ_VT_PAL /* US people are dumber than the world average */
+#define FREQ_VT		FREQ_VT_PAL /* Replace by FREQ_VT_NTSC and pray that it works */
 /*#define FREQ_VT 6.165*/ /* teletext-like signal on france, 0xe7 instead of 0x27 */
 #define FREQ_CRYPT	4.5	/* found on premiere */
 #define FREQ_VPS	2.5	/* probably only pal */
@@ -323,11 +323,11 @@ decoder_decode_vt (decoder *dec, u8 *data)
      {
        /* ets300-706 */
        case 0:
-         av_push (av, newSViv (unham8 (data[5], data[6]) | (mag << 8)));
-         av_push (av, newSViv (unham8 (data[7], data[8])
-                               | (unham8 (data[9], data[10]) << 8)
-                               | (unham8 (data[11], data[12]) << 16)));
-         av_push (av, newSVpvn (data+13, 32));
+         av_push (av, newSVpvn (data+5, 40));
+         av_push (av, newSViv  (unham8 (data[5], data[6]) | (mag << 8)));
+         av_push (av, newSViv  (unham8 (data[7], data[8])
+                                | (unham8 (data[9], data[10]) << 8)
+                                | (unham8 (data[11], data[12]) << 16)));
          break;
        case  1: case  2: case  3: case  4: case  5: case  6: case  7: case  8: case  9: case 10:
        case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 20:
@@ -1201,6 +1201,34 @@ MODULE = Video::Capture::VBI		PACKAGE = Video::Capture::VBI
 
 PROTOTYPES: ENABLE
 
+int
+unham4(data)
+	SV *	data
+        CODE:
+        STRLEN len;
+        unsigned char *d = (unsigned char *)SvPV (data, len);
+
+        if (len < 1)
+          croak ("unham4: length must be at least 1");
+
+        RETVAL = unham4 (*d);
+        OUTPUT:
+        RETVAL
+        
+int
+unham8(data)
+	SV *	data
+        CODE:
+        STRLEN len;
+        unsigned char *d = (unsigned char *)SvPV (data, len);
+
+        if (len < 2)
+          croak ("unham8: length must be at least 2");
+
+        RETVAL = unham8 (d[0], d[1]);
+        OUTPUT:
+        RETVAL
+        
 void
 decode_field(field, types)
 	SV *	field
@@ -1234,7 +1262,7 @@ decode_vtpage(data)
         lines = SvCUR(data) / VT_COLS;
 
         if (lines > VT_LINES)
-          croak ("videotext cannot have more than 24 lines (argument has %d lines)\n", lines);
+          croak ("videotext cannot have more than %d lines (argument has %d lines)\n", VT_LINES, lines);
         
         Zero(chr, VT_COLS*VT_LINES, u8);
         Zero(atr, VT_COLS*VT_LINES, u16);

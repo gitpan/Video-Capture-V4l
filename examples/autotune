@@ -110,10 +110,10 @@ sub scan_vbi {
             $vbi_alloc .= "V";
          } elsif ($_->[0] == VBI_VT) {
             if ($_->[2] == 0) {
-               if ($_->[3] == 0x1df) {
+               if ($_->[4] == 0x1df) {
                   $fea{EPG}="";
                } else {
-                  $fea{VT}=vt_2_name($_->[5]);
+                  $fea{VT}=vt_2_name($_->[3]);
                }
             } elsif ($_->[2] == 30) {
                if (($_->[3]>>1) == 0) {
@@ -148,7 +148,7 @@ sub scan_vbi {
 
 # try to guess sender name from videotext
 sub vt_2_name {
-   local $_ = substr (shift, 0, 20) & ("\x7f") x 20;
+   local $_ = substr (shift, 8, 20) & ("\x7f") x 20;
    s/^\d+//;
    s/^[\x00-\x1f ]+//;
    s/\s*[\x00-\x1f].*//;

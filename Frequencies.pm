@@ -119,7 +119,7 @@ Republic, Ukraine, Vietnam
 
 =item (G) SECAM
 
-Greecem Iran, Iraq, Mali, Mauritus, Morocco, Saudi Arabia
+Greece, Iran, Iraq, Mali, Mauritus, Morocco, Saudi Arabia
 
 =item (K) SECAM
 

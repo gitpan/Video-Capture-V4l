@@ -102,12 +102,10 @@ my $channel = $grab->channel (0);
 my $tuner = $grab->tuner (0);
 $tuner->mode(MODE_PAL);
 $channel->norm(MODE_PAL);
-$tuner->mode(8);
 $tuner->set;
 $channel->set;
 
 $RTL2 = 154250;
-$RTL2 = 196250;
 
 print $grab->freq ($RTL2),"\n";
 

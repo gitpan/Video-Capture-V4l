@@ -53,7 +53,7 @@ for(;;) {
             $vbi_alloc .= "V";
          } elsif ($_->[0] == VBI_VT) {
             if ($_->[2] == 0) {
-               if ($_->[3] == 0x1df) {
+               if ($_->[4] == 0x1df) {
                   fea('EPG');
                } else {
                   fea('VT');

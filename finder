@@ -19,8 +19,8 @@ $grab->picture->hue(32768);
 $grab->picture->colour(32768);
 $grab->picture->set;
 
-$RTL2 = 855250;
-#$RTL2 = 154250;
+#$RTL2 = 855250;
+$RTL2 = 154250;
 print $grab->freq ($RTL2),"\n";
 
 $|=1;

@@ -2,9 +2,6 @@
 
 use Video::Capture::V4l;
 BEGIN { eval "use Time::HiRes 'time'" }
-use PDL;
-use PDL::Image2D;
-use PDL::IO::Pnm;
 
 $grab = new Video::Capture::V4l;
 
@@ -27,7 +24,7 @@ print $grab->freq ($RTL2),"\n";
 
 $|=1;
 
-my($w,$h)=(128,96);
+my($w,$h)=(128,128);
 
 my $count = 0;
 
@@ -38,7 +35,7 @@ print "press enter to start> "; <STDIN>;
 my $frame=0;
 my $fr=$grab->capture ($frame,$w,$h);
 
-print DB pack("N*",$w>>4,$h>>4);
+print DB pack("N*",$w>>3,$h>>3);
 
 for(;;) {
    my $nfr = $grab->capture (1-$frame,$w,$h);
@@ -58,7 +55,6 @@ for(;;) {
    Video::Capture::V4l::reduce2($fr,$w>>0);
    Video::Capture::V4l::reduce2($fr,$w>>1);
    Video::Capture::V4l::reduce2($fr,$w>>2);
-   Video::Capture::V4l::reduce2($fr,$w>>3);
    Video::Capture::V4l::normalize($fr);
 
    #${$img->get_dataref}=$fr; $img->upd_data();

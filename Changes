@@ -1,5 +1,41 @@
 Revision history for Perl extension Video::Capture::V4l.
 
+0.2  Wed Dec  1 21:21:02 CET 1999
+	- fixed segfault problems due to non-reentrant malloc on many systems
+          (by pre-allocating lotsamemory of cousre ;).
+
+0.11 Wed Nov 24 18:45:23 CET 1999
+	- added epgview-simple (hack!), a regularly updated "coming next" screen.
+        - added epgview, which requires Curses and is much nicer.
+        - made it compile with perl-5.005_03.
+        - removed epgview-simple again ;)
+        - fixed "no dot in PATH" problem in V4l.
+
+0.1   Sun Oct 24 21:18:00 CEST 1999
+	- added Video::XawTV.
+        - backlog(0) now cancels vbi frame grabbing.
+        - added autotune.
+        - the automatic re-centering was causing too many bit errors.
+
+0.08  Sat Sep  4 19:17:42 CEST 1999
+	- added dumpepg and renamed epg to getepg.
+        - many bugfixes.
+        - added VBI_OTHER (for other types of lines).
+        - improved epg decoder & viewer.
+        - fixed VPS/VT CNI code (damned %%&$& bit reversals).
+        - vastly improved detection reliability.
+        - added %VPS_CNI and %VT_NI tables.
+        - preliminary premiere crypt data capturing.
+
+0.04  Fri Aug 13 00:32:17 CEST 1999
+	- added more example apps: vbi-info, epg.
+        - vastly improved teletext decoding.
+
+0.03  Wed Aug  4 21:15:28 CEST 1999
+	- added VBI module and example videotext-decoder.
+        - "cleaned" up file structure, as advised by Nick.
+        - renamed Video::Capture::Frequencies to Video::Frequencies.
+
 0.02  Wed Jul 14 14:21:37 CEST 1999
 	- added the Video::Capture::Frequencies module.
         - added finder/indexer sample applications.

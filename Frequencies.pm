@@ -1,12 +1,12 @@
-package Video::Capture::Frequencies;
+package Video::Frequencies;
 
 =head1 NAME
 
-Video::Capture::Frequencies - Many, many frequency constants and lists.
+Video::Frequencies - Many, many frequency constants and lists.
 
 =head1 SYNOPSIS
 
-   use Video::Capture::Frequencies;
+   use Video::Frequencies;
 
    while (my($name,$list) = each %CHANLIST) {
       print "$name\n";
@@ -23,7 +23,7 @@ with channel => frequency relations for digital and analog video and audio
 broadcast. Another, shorter way to put it is "worldwide channel/frequency
 list". All frequencies are given in kHz.
 
-It's a good idea to use C<perldoc -m Video::Capture::Frequencies> to get an idea
+It's a good idea to use C<perldoc -m Video::Frequencies> to get an idea
 on how the various constants and lists look like.
 
 =head1 Exported Audio Carrier Frequencies
@@ -172,7 +172,7 @@ $CHANLIST{"ntsc-bcast"} contains a reference to %NTSC_BCAST.
 
 =head1 AUTHOR
 
-Nathan Laredo (laredo@broked.net), adaptted to perl by Marc Lehmann
+Nathan Laredo (laredo@broked.net), adapted to perl by Marc Lehmann
 <pcg@goof.com>
 
 =cut

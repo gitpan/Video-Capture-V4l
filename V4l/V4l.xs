@@ -3,15 +3,20 @@
 #include "XSUB.h"
 
 #include <sys/types.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <sys/mman.h>
 
+#include <string.h>
+#include <pthread.h>
 #include <linux/videodev.h>
 
 #define NEED_newCONSTSUB
-#include "gppport.h"
+#include "../gppport.h"
 
 #define XSRETURN_bool(bool) if (bool) XSRETURN_YES; else XSRETURN_NO;
+
+#define VBI_BPF (2048*32)
 
 typedef struct video_capability *Video__Capture__V4l__Capability;
 typedef struct video_channel *Video__Capture__V4l__Channel;
@@ -36,7 +41,7 @@ new_struct (SV *sv, size_t bytes, const char *pkg)
 {
   SV *rv = newRV_noinc (sv);
   attach_struct (rv, bytes);
-  return sv_bless (rv, gv_stashpv (pkg, TRUE));
+  return sv_bless (rv, gv_stashpv ((char *)pkg, TRUE));
 }
 
 static void *
@@ -114,9 +119,183 @@ find_private (SV *sv)
 typedef unsigned char u8;
 typedef unsigned int UI;
 
-MODULE = Video::Capture::V4l		PACKAGE = Video::Capture::V4l		
+#define get_field(field) (*hv_fetch ((HV*)SvRV (self), #field, strlen(#field), 0))
+
+/* only one thread currently */
+typedef struct vbi_frame {
+  struct vbi_frame *next;
+  int size;
+  char data[VBI_BPF];
+} vbi_frame;
+static vbi_frame *vbi_head, *vbi_tail,
+                 *vbi_free;
+static int vbi_fd;
+static UI vbi_max;
+static pthread_t vbi_snatcher;
+static pthread_mutex_t vbi_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t vbi_cond = PTHREAD_COND_INITIALIZER;
+
+static void *
+vbi_snatcher_thread (void *arg)
+{
+  for(;;)
+    {
+      vbi_frame *next;
+
+      pthread_mutex_lock (&vbi_lock);
+      if (vbi_free)
+        {
+          next = vbi_free;
+          vbi_free = vbi_free->next;
+          pthread_mutex_unlock (&vbi_lock);
+
+          next->next = 0;
+          next->size = read (vbi_fd, next->data, VBI_BPF);
+
+          pthread_mutex_lock (&vbi_lock);
+
+          if (vbi_tail)
+            vbi_tail->next = next;
+          else
+            vbi_head = vbi_tail = next;
+
+          vbi_tail = next;
+          vbi_max--;
+
+          pthread_cond_signal (&vbi_cond);
+          pthread_mutex_unlock (&vbi_lock);
+        }
+      else 
+        {
+          static struct timeval to = { 0, 1000000 / 100 }; /* skip almost a frame */
+
+          pthread_mutex_unlock (&vbi_lock);
+          select (0, 0, 0, 0, &to);
+        }
+    }
+}
+
+MODULE = Video::Capture::V4l		PACKAGE = Video::Capture::V4l::VBI
 
 PROTOTYPES: ENABLE
+
+SV *
+field(self)
+	SV *	self
+        CODE:
+        int fd = SvIV(get_field(fd));
+
+        if (vbi_fd == fd)
+          {
+            vbi_frame *next;
+
+            pthread_mutex_lock (&vbi_lock);
+            while (!vbi_head)
+              pthread_cond_wait (&vbi_cond, &vbi_lock);
+
+            RETVAL = newSVpvn (vbi_head->data, vbi_head->size);
+
+            vbi_max++;
+            next = vbi_head->next;
+
+            vbi_head->next = vbi_free;
+            vbi_free = vbi_head;
+
+            vbi_head = next;
+
+            if (!next)
+              vbi_tail = vbi_head;
+
+            pthread_mutex_unlock (&vbi_lock);
+          }
+        else
+          {
+            int len;
+
+            RETVAL = newSVpvn ("", 0);
+            SvGROW (RETVAL, VBI_BPF);
+            len = read (fd, SvPV_nolen (RETVAL), VBI_BPF);
+            SvCUR_set (RETVAL, len);
+          }
+
+	OUTPUT:
+        RETVAL
+
+void
+backlog(self,backlog)
+  	SV *	self
+        unsigned int	backlog
+        CODE:
+
+        while (vbi_max != backlog)
+          {
+            vbi_frame *f;
+            pthread_mutex_lock (&vbi_lock);
+
+            if (vbi_max < backlog)
+              {
+                f = malloc (sizeof (vbi_frame));
+                f->next = vbi_free;
+                vbi_free = f;
+                vbi_max++;
+              }
+            else
+              {
+                f = vbi_free;
+                if (f)
+                  {
+                    vbi_free = vbi_free->next;
+                    free (f);
+                    vbi_max--;
+                  }
+              }
+
+            pthread_mutex_unlock (&vbi_lock);
+          }
+
+        if (backlog)
+          {
+            if (!vbi_fd)
+              {
+                vbi_fd = SvIV(get_field(fd));
+                pthread_create (&vbi_snatcher, 0, vbi_snatcher_thread, 0);
+              }
+          }
+        else
+          {
+            if (vbi_fd)
+              {
+                pthread_cancel (vbi_snatcher);
+                pthread_join (vbi_snatcher, 0);
+                vbi_fd = 0;
+              }
+
+            /* no locking necessary, in theory */
+            while (vbi_head)
+              {
+                vbi_frame *next = vbi_head->next;
+                free (vbi_head);
+                vbi_head = next;
+              }
+            vbi_tail = 0;
+          }
+
+int
+queued(self)
+	CODE:
+        if (vbi_fd)
+          {
+            /* FIXME: lock/unlock */
+            pthread_mutex_lock (&vbi_lock);
+            RETVAL = !!vbi_head;
+            pthread_mutex_unlock (&vbi_lock);
+          }
+        else
+          RETVAL = 1;
+	OUTPUT:
+        RETVAL
+
+MODULE = Video::Capture::V4l		PACKAGE = Video::Capture::V4l		
 
 SV *
 capture(sv,frame,width,height,format = VIDEO_PALETTE_RGB24)
@@ -297,7 +476,7 @@ set(sv)
         XSRETURN_bool (ioctl (SvIV (SvRV (sv)), VIDIOCSPICT, old_struct (sv, "Video::Capture::V4l::Picture")) == 0);
 
 # accessors/mutators
-INCLUDE: genacc |
+INCLUDE: ./genacc |
 
 MODULE = Video::Capture::V4l		PACKAGE = Video::Capture::V4l		
 
@@ -548,3 +727,4 @@ linreg1(array)
         PUSHs (sv_2mortal (newSVnv (1)));
         PUSHs (sv_2mortal (newSVnv (c2)));
 }
+

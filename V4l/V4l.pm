@@ -9,6 +9,8 @@ require DynaLoader;
 
 use Fcntl;
 
+$VERSION = 0.2;
+
 @ISA = qw(Exporter DynaLoader);
 
 @EXPORT = qw(
@@ -18,6 +20,7 @@ use Fcntl;
 	PALETTE_YUV411 PALETTE_YUV411P PALETTE_YUV420 PALETTE_YUV420P PALETTE_YUV422
 	PALETTE_YUV422P PALETTE_YUYV
 	SOUND_LANG1 SOUND_LANG2 SOUND_MONO SOUND_STEREO
+        VBI_MAXLINES VBI_BPL VBI_BPF
 );
 
 @EXPORT_OK = qw(
@@ -77,7 +80,10 @@ use Fcntl;
 	TYPE_TUNER
 );
 
-$VERSION = '0.02';
+# shit
+sub VBI_MAXLINES	(){ 32 }
+sub VBI_BPL		(){ 2048 }
+sub VBI_BPF		(){ VBI_BPL * VBI_MAXLINES }
 
 bootstrap Video::Capture::V4l $VERSION;
 
@@ -161,6 +167,26 @@ sub volume    ($){ shift->flags & &Video::Capture::V4l::AUDIO_VOLUME  }
 sub bass      ($){ shift->flags & &Video::Capture::V4l::AUDIO_BASS    }
 sub treble    ($){ shift->flags & &Video::Capture::V4l::AUDIO_TREBLE  }
 
+package Video::Capture::V4l::VBI;
+
+use Fcntl;
+
+sub new(;$) {
+   my $class  = shift;
+   my $device = shift || "/dev/vbi0";
+   my $self = bless { device => $device }, $class;
+
+   $self->{handle} = local *{$device};
+   sysopen $self->{handle},$device,O_RDWR or return;
+   $self->{fd} = fileno ($self->{handle});
+
+   $self;
+}
+
+sub fileno($) {
+   $_[0]->{fd};
+}
+
 1;
 __END__
 
@@ -174,9 +200,9 @@ Video::Capture::V4l - Perl interface to the Video4linux framegrabber interface.
 
 =head1 DESCRIPTION
 
-Not documentation AGAIN! Please see the script "grab" that is packaged in
-the distribution and direct any question and feature requests (as wella s
-bug reports) to the author.
+Not documentation AGAIN! Please see the scripts grab, inexer or vbi that
+are packaged in the distribution and direct any question and feature
+requests (as well as bug reports) to the author.
 
 =head1 Exported constants
 
@@ -247,8 +273,8 @@ Marc Lehmann <pcg@goof.com>
 =head1 LICENSE
 
 This module is available under GPL only (see the file COPYING for
-details), if you want an exception please contact the author, you might
-get an exception!
+details), if you want an exception please contact the author, who might
+grant exceptions freely ;)
 
 =head1 SEE ALSO
 

@@ -6,7 +6,7 @@ Video::Capture::V4l::Audio			STRUCT
 Video::Capture::V4l::Tuner			STRUCT
 Video::Capture::V4l::Picture			STRUCT
 
-UI						T_UV
+UI						T_IV
 
 INPUT
 

@@ -566,21 +566,17 @@ void
 bgr2rgb(fr)
 	SV *	fr
         CODE:
-        u8 mfr = 255, max = 0;
-        u8 *src, *dst, *end;
+{
+        u8 *data, *end;
 
         end = SvEND (fr);
-        dst = SvPV_nolen (fr);
 
-        for (src = SvPV_nolen (fr); src < end; src++)
+        for (data = SvPV_nolen (fr); data < end; data += 3)
           {
-            if (*src > max) max = *src;
-            if (*src < mfr) mfr = *src;
+            data[0] ^= data[2];
+            data[2] ^= data[0];
+            data[0] ^= data[2];
           }
-
-        if (max != mfr)
-          for (src = SvPV_nolen (fr); src < end; )
-              *dst++ = ((UI)*src++ - mfr) * 255 / (max-mfr);
 }
 	OUTPUT:
         fr

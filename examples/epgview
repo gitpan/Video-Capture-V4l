@@ -201,7 +201,7 @@ sub show_current {
          }
          $si = $_->{sinfo};
       }
-      addttstr ($_->{title}."#$si", $lines);
+      addttstr ($_->{title}.$si, $lines);
 
       addch ("\n");
       last unless --$lines;

@@ -9,7 +9,7 @@ require DynaLoader;
 
 use Fcntl;
 
-$VERSION = 0.221;
+$VERSION = 0.222;
 
 @ISA = qw(Exporter DynaLoader);
 

@@ -11,7 +11,7 @@ DESCRIPTION
     requests (as well as bug reports) to the author.
 
 Exported constants
-    The following hideous constants are defined in the `Video::Capture::V4l'
+    The following hideous constants are defined in the "Video::Capture::V4l"
     package, but you seldom need to use them.
 
       AUDIO_BASS

@@ -99,10 +99,13 @@ for($_=0; my $audio = $grab->audio($_); $_++) {
 print_picture $grab->picture;
 
 my $channel = $grab->channel (0);
+$channel->norm(MODE_PAL);
+$channel->set;
 my $tuner = $grab->tuner (0);
 $tuner->mode(MODE_PAL);
-$channel->norm(MODE_PAL);
 $tuner->set;
+my $channel = $grab->channel (1);
+$channel->norm(MODE_PAL);
 $channel->set;
 
 $RTL2 = 154250;
@@ -117,6 +120,7 @@ my $fr=$grab->capture ($frame, 64, 48);
 for(;;) {
    my $nfr = $grab->capture (1-$frame, 64, 48);
    $grab->sync($frame) or die "unable to sync";
+   open X, ">x"; print X $fr; close X;
 
    # save $fr now, as it contains the raw BGR data
    print ".";

@@ -1,5 +1,9 @@
 Revision history for Perl extension Video::Capture::V4l.
 
+0.222 Mon Feb 25 00:23:43 CET 2002
+	- work around missing cancellation bug in linux by explicitly
+          calling testcancel.
+
 0.221 Thu May 11 18:28:29 CEST 2000
 	- fixed oh so stupid bug reported by M C Lincoln.
 

@@ -184,6 +184,7 @@ vbi_snatcher_thread (void *arg)
           static struct timespec to = { 0, 1000000000 / 70 }; /* skip almost a frame */
 
           pthread_mutex_unlock (&vbi_lock);
+          pthread_testcancel ();
           nanosleep (&to, 0);
         }
     }

@@ -8,7 +8,7 @@ use Video::Capture::VBI;
 
 package Video::Capture::VBI::EPG;
 
-use Video::Capture::VBI qw(:DEFAULT %VPS_CNI);
+use Video::Capture::VBI qw(:DEFAULT %VPS_CNI %VT_NI);
 use Storable;
 
 use base 'Video::Capture::VBI::VT';

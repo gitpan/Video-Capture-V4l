@@ -17,7 +17,7 @@ Video::Capture::VBI - Functions to manipulate vbi fields & lines.
 Create a new VBI decoder object. VBI decoding often requires state, which
 this object represents
 
-=item reset
+=item reset (NYI)
 
 Reset the state (e.g. after switching a channel).
 
@@ -48,6 +48,37 @@ BEGIN {
 }
 
 use Fcntl;
+
+=head1 CONSTANTS / MASK OPERATORS
+
+The following constants are available (see ETS 300 706 for a more thorough
+definition).
+
+   VTX_SUB 0x003f7f # S1..S4 field mask
+
+   VTX_C4  0x000080 # erase page
+   VTX_C5  0x004000 # newsflash
+   VTX_C6  0x008000 # subtitle
+   VTX_C7  0x010000 # suppress header
+   VTX_C8  0x020000 # update indicator
+   VTX_C9  0x040000 # interrupted sequence
+   VTX_C10 0x080000 # inhibit display
+   VTX_C11 0x100000 # magazine serial
+
+   VTX_C12 0x200000 # ... option ...
+   VTX_C13 0x400000 # ... character ...
+   VTX_C14 0x800000 # ... set
+
+The following mask functions all take a single "CTRL" bitfield and return
+the corresponding subfield:
+
+   VTX_S1  (shift    )&15 } # S1
+   VTX_S2  (shift>> 4)& 7 } # S2
+   VTX_S3  (shift>> 8)&15 } # S3
+   VTX_S4  (shift>>12)& 3 } # S4
+   VTX_NOC (shift>>21)& 7 } # national character set...
+
+=cut
 
 sub VTX_SUB (){ 0x003f7f }
 sub VTX_S1  ($){ (shift    )&15 }

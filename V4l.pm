@@ -76,7 +76,8 @@ use Fcntl;
 	TYPE_TELETEXT
 	TYPE_TUNER
 );
-$VERSION = '0.01';
+
+$VERSION = '0.02';
 
 bootstrap Video::Capture::V4l $VERSION;
 

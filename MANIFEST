@@ -10,3 +10,6 @@ typemap
 COPYING
 grab
 TODO
+indexer
+finder
+Frequencies.pm

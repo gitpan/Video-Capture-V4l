@@ -1,5 +1,10 @@
 Revision history for Perl extension Video::Capture::V4l.
 
+0.02  Wed Jul 14 14:21:37 CEST 1999
+	- added the Video::Capture::Frequencies module.
+        - added finder/indexer sample applications.
+        - the frequency formula was bogus.
+
 0.01  Thu Jul  1 20:32:32 1999
 	- original version; created by h2xs 1.19
 

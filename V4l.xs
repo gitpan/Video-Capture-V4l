@@ -119,120 +119,6 @@ MODULE = Video::Capture::V4l		PACKAGE = Video::Capture::V4l
 PROTOTYPES: ENABLE
 
 SV *
-reduce(in,w,m)
-	SV *	in
-        UI w
-        UI m
-        CODE:
-{
-        UI sz = SvCUR (in) / (m*m);
-        UI y;
-        SV *rs = newSVpv ("", 0);
-        u8 *src, *dst, *end;
-
-        SvGROW (rs, sz);
-        SvCUR_set (rs, sz);
-        src = SvPV_nolen (in);
-        dst = SvPV_nolen (rs);
-
-        if (m != 8)
-           croak ("m must be 8");
-
-        for (y = sz / (m*3); --y; )
-          {
-            end = src + w * 3;
-            do
-              {
-                dst[0] = ((UI)src[ 0] + (UI)src[ 3] + (UI)src[ 6] + (UI)src[ 9] +
-                          (UI)src[12] + (UI)src[15] + (UI)src[18] + (UI)src[21] + 3) >> 3;
-                dst[1] = ((UI)src[ 1] + (UI)src[ 4] + (UI)src[ 7] + (UI)src[10] +
-                          (UI)src[13] + (UI)src[16] + (UI)src[19] + (UI)src[22] + 3) >> 3;
-                dst[2] = ((UI)src[ 2] + (UI)src[ 5] + (UI)src[ 8] + (UI)src[11] +
-                          (UI)src[14] + (UI)src[17] + (UI)src[20] + (UI)src[23] + 3) >> 3;
-                dst += 3;
-                src += 24;
-              }
-            while (src < end);
-            src += w*(m-1)*3;
-          }
-
-        RETVAL=rs;
-}
-	OUTPUT:
-        RETVAL
-
-SV *
-normalize(in)
-	SV *	in
-        CODE:
-{
-        UI sz = SvCUR (in);
-        u8 min = 255, max = 0;
-        SV *rs = newSVpv ("", 0);
-        u8 *src, *dst, *end;
-
-        SvGROW (rs, sz);
-        SvCUR_set (rs, sz);
-        end = SvEND (in);
-        dst = SvPV_nolen (rs);
-
-        for (src = SvPV_nolen (in); src < end; src++)
-          {
-            if (*src > max) max = *src;
-            if (*src < min) min = *src;
-          }
-
-        if (max != min)
-          for (src = SvPV_nolen (in); src < end; )
-              *dst++ = ((UI)*src++ - min) * 255 / (max-min);
-        else
-          for (src = SvPV_nolen (in); src < end; )
-              *dst++ = *src++;
-
-        RETVAL=rs;
-}
-	OUTPUT:
-        RETVAL
-
-void
-findmin(db,fr)
-	SV *db
-        SV *fr
-        PPCODE:
-{
-	UI diff, min = -1;
-        UI minindex, index = 0;
-        u8 *src, *dst, *end;
-
-        src = SvPV_nolen (db);
-        end = SvEND (db);
-
-        do
-          {
-            dst = SvPV_nolen (fr);
-            end = src + SvCUR (fr);
-            diff = 0;
-
-            do
-              diff += abs ((int)*src++ - (int)*dst++);
-            while (src < end);
-
-            if (min > diff)
-              {
-                min = diff;
-                minindex = index;
-              }
-
-            index++;
-          }
-        while (src < (u8*)SvEND (db));
-
-        EXTEND (sp, 2);
-        PUSHs (sv_2mortal (newSViv (minindex)));
-        PUSHs (sv_2mortal (newSViv ((min << 8) / SvCUR (fr))));
-}
-
-SV *
 capture(sv,frame,width,height,format = VIDEO_PALETTE_RGB24)
 	SV	*sv
         unsigned int	frame
@@ -290,13 +176,13 @@ _freq (fd,fr)
         CODE:
         if (items > 1)
           {
-            fr = (fr+499)*16/1000;
+            fr = ((fr<<4)+499)/1000;
             ioctl (fd, VIDIOCSFREQ, &fr);
           }
         if (GIMME_V != G_VOID)
           {
             if (ioctl (fd, VIDIOCGFREQ, &fr) == 0)
-              RETVAL = fr*1000/16;
+              RETVAL = (fr*1000+7)>>4;
             else
               XSRETURN_EMPTY;
           }
@@ -415,6 +301,8 @@ INCLUDE: genacc |
 
 MODULE = Video::Capture::V4l		PACKAGE = Video::Capture::V4l		
 
+PROTOTYPES: ENABLE
+
 BOOT:
 {
 	HV *stash = gv_stashpvn("Video::Capture::V4l", 19, TRUE);
@@ -477,3 +365,186 @@ BOOT:
 	newCONSTSUB(stash,"TYPE_TUNER",	newSViv(VID_TYPE_TUNER));
 }
 
+SV *
+reduce2(fr,w)
+	SV *	fr
+        UI w
+        CODE:
+{
+        u8 *src, *dst, *end;
+
+        src = SvPV_nolen (fr);
+        dst = SvPV_nolen (fr);
+
+        w *= 3;
+
+        do
+          {
+            end = src + w;
+            do
+              {
+                dst[1] = ((UI)src[0] + (UI)src[3]) >> 1; src++;
+                dst[2] = ((UI)src[0] + (UI)src[3]) >> 1; src++;
+                dst[0] = ((UI)src[0] + (UI)src[3]) >> 1; src++;
+                src += 3;
+                dst += 3;
+              }
+            while (src < end);
+            src = end + w;
+          }
+        while (src < (u8*)SvEND (fr));
+
+        SvCUR_set (fr, dst - (u8*)SvPV_nolen (fr));
+}
+	OUTPUT:
+        fr
+
+void
+normalize(fr)
+	SV *	fr
+        CODE:
+{
+        u8 mfr = 255, max = 0;
+        u8 *src, *dst, *end;
+
+        end = SvEND (fr);
+        dst = SvPV_nolen (fr);
+
+        for (src = SvPV_nolen (fr); src < end; src++)
+          {
+            if (*src > max) max = *src;
+            if (*src < mfr) mfr = *src;
+          }
+
+        if (max != mfr)
+          for (src = SvPV_nolen (fr); src < end; )
+              *dst++ = ((UI)*src++ - mfr) * 255 / (max-mfr);
+}
+	OUTPUT:
+        fr
+
+void
+findmin(db,fr,start=0,count=0)
+	SV *	db
+        SV *	fr
+        UI	start
+        UI	count
+        PPCODE:
+{
+	UI diff, min = -1;
+        int mindata, data;
+        u8 *src, *dst, *end, *efr;
+        UI datasize = SvCUR (fr);
+        UI framesize = datasize + sizeof(int);
+
+        src = SvPV_nolen (db) + start * framesize;
+        if (src < (u8*)SvPV_nolen (db) || src > (u8*)SvEND (db))
+          src = SvPV_nolen (db);
+
+        end = src + count * framesize;
+        if (end <= src || end > (u8*)SvEND (db))
+          end = SvEND (db);
+
+        do
+          {
+            data = *((int *)src)++;
+
+            dst = SvPV_nolen (fr);
+            efr = src + datasize;
+            diff = 0;
+
+            do
+              {
+                int dif = (int)*src++ - (int)*dst++;
+                diff += dif*dif;
+              }
+            while (src < efr);
+
+            if (min > diff)
+              {
+                min = diff;
+                mindata = data;
+              }
+          }
+        while (src < end);
+
+        EXTEND (sp, 2);
+        PUSHs (sv_2mortal (newSViv (mindata)));
+        PUSHs (sv_2mortal (newSViv ((min << 8) / SvCUR (fr))));
+}
+
+void
+linreg(array)
+	SV *	array
+        PPCODE:
+{
+	AV *xy = (AV*) SvRV (array);
+	I32 i;
+	I32 n = (av_len (xy)+1)>>1;
+        double x_ = 0, y_ = 0;
+        double sxy = 0, sxx = 0, syy = 0;
+
+	for (i=0; i<n; i++)
+          {
+            x_ += SvNV(*av_fetch(xy, i*2  ,1));
+            y_ += SvNV(*av_fetch(xy, i*2+1,1));
+          }
+        
+        x_ /= n;
+        y_ /= n;
+
+	for (i=0; i<n; i++)
+          {
+            double x = SvNV(*av_fetch(xy, i*2  ,1));
+            double y = SvNV(*av_fetch(xy, i*2+1,1));
+
+            sxy += (x-x_)*(y-y_);
+            sxx += (x-x_)*(x-x_);
+            syy += (y-y_)*(y-y_);
+          }
+        
+        {
+          double rxy2 = sxy*sxy / (sxx*syy);
+          double b = sxy / sxx;
+          double a = y_ - b*x_;
+          double r2 = (n-1)/(n-2)*syy*(1-rxy2);
+
+          EXTEND (sp, 3);
+          PUSHs (sv_2mortal (newSVnv (a )));
+          PUSHs (sv_2mortal (newSVnv (b )));
+          PUSHs (sv_2mortal (newSVnv (r2)));
+        }
+}
+
+void
+linreg1(array)
+	SV *	array
+        PPCODE:
+{
+	AV *xy = (AV*) SvRV (array);
+	I32 i;
+	I32 n = (av_len (xy)+1)>>1;
+        double c = 0;
+        double c2 = 0;
+
+	for (i=0; i<n; i++)
+          {
+            double d = SvNV(*av_fetch(xy, i*2-1,1)) - SvNV(*av_fetch(xy, i*2,1));
+            c += d;
+          }
+        
+        c /= n;
+
+	for (i=0; i<n; i++)
+          {
+            double d = c + SvNV(*av_fetch(xy, i*2,1)) - SvNV(*av_fetch(xy, i*2-1,1));
+            c2 += d*d;
+          }
+
+        c2 /= n;
+        
+        EXTEND (sp, 3);
+        PUSHs (sv_2mortal (newSVnv (c)));
+        PUSHs (sv_2mortal (newSVnv (1)));
+        PUSHs (sv_2mortal (newSVnv (c2)));
+}

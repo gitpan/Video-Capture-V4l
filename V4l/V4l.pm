@@ -9,7 +9,7 @@ require DynaLoader;
 
 use Fcntl;
 
-$VERSION = 0.222;
+$VERSION = 0.224;
 
 @ISA = qw(Exporter DynaLoader);
 
@@ -95,8 +95,8 @@ sub new(;$) {
    $self->{handle} = local *{$device};
    sysopen $self->{handle},$device,O_RDWR or return;
    $self->{fd} = fileno ($self->{handle});
-   $self->{capability} = _capabilities_new($self->{fd});
-   $self->{picture} = _picture_new($self->{fd});
+   $self->{capability} = _capabilities_new ($self->{fd});
+   $self->{picture} = _picture_new ($self->{fd});
 
    $self->{capability}->get
    && $self->{picture}->get ? $self : ();
@@ -106,25 +106,25 @@ sub capability($) { shift->{capability} }
 sub picture($)    { shift->{picture} }
 
 sub channel($$) {
-   my $c = _channel_new($_[0]->{fd});
-   $c->channel($_[1]);
+   my $c = _channel_new ($_[0]->{fd});
+   $c->channel ($_[1]);
    $c->get ? $c : ();
 }
 
 sub tuner($$) {
-   my $c = _tuner_new($_[0]->{fd});
-   $c->tuner($_[1]);
+   my $c = _tuner_new ($_[0]->{fd});
+   $c->tuner ($_[1]);
    $c->get ? $c : ();
 }
 
 sub audio($$) {
-   my $c = _audio_new($_[0]->{fd});
-   $c->audio($_[1]);
+   my $c = _audio_new ($_[0]->{fd});
+   $c->audio ($_[1]);
    $c->get ? $c : ();
 }
 
 sub freq($;$) {
-   _freq(shift->{fd},@_);
+   _freq (shift->{fd},@_);
 }
 
 package Video::Capture::V4l::Capability;
@@ -207,7 +207,7 @@ requests (as well as bug reports) to the author.
 =head1 Exported constants
 
 The following hideous constants are defined in the C<Video::Capture::V4l> package,
-but you seldom need to use them.
+but you rarely need to use them.
 
   AUDIO_BASS
   AUDIO_MUTABLE

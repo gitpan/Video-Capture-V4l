@@ -1,5 +1,10 @@
 Revision history for Perl extension Video::Capture::V4l.
 
+0.224 Sun Jun 13 18:02:32 CEST 2004
+	- fix some compile bugs, very very small documentation updates.
+        - Video::Capture::V4l2 might replace this module in the future,
+          details unclear.
+
 0.222 Mon Feb 25 00:23:43 CET 2002
 	- work around missing cancellation bug in linux by explicitly
           calling testcancel.

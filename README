@@ -12,7 +12,7 @@ DESCRIPTION
 
 Exported constants
     The following hideous constants are defined in the "Video::Capture::V4l"
-    package, but you seldom need to use them.
+    package, but you rarely need to use them.
 
       AUDIO_BASS
       AUDIO_MUTABLE

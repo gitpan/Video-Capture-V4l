@@ -491,7 +491,7 @@ decoder_decode (decoder *dec, UI y, u8 *line)
                     case 0x55:
                       break;
                     default:
-                      /* no teletext page */
+                      ; /* no teletext page */
                     }
 
                   if (data[1] == 0x55)
@@ -538,7 +538,7 @@ decoder_decode (decoder *dec, UI y, u8 *line)
             }
 #endif
 
-          /* watch out for empty lines, tets signals etc.. */
+          /* watch out for empty lines, test signals etc.. */
           if (type & VBI_OTHER)
             {
               dec->did_agc = did_agc; /* other signals do not affect agc, yet */
@@ -576,9 +576,9 @@ decoder_decode (decoder *dec, UI y, u8 *line)
 
 static const u8 g0_to_iso_table[256] =
   "                                "
-  " !\"£$%&'()*+,-./0123456789:;<=>?"
-  "@ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ^#"
-  "-abcdefghijklmnopqrstuvwxyzäöüß#"
+  " !\"#$%&'()*+,-./0123456789:;<=>?"
+  "@ABCDEFGHIJKLMNOPQRSTUVWXYZAOU^#"
+  "-abcdefghijklmnopqrstuvwxyzaous#"
   "                                "
   "                                "
   "                                "
@@ -691,17 +691,17 @@ decode_ansi (u8 *chr, u16 *atr)
   SV *sv = newSVpvn ("", 0);
   u16 o;
 
-  for (x=0; x<VT_COLS; x++)
+  for (x=0; x < VT_COLS; x++)
     {
       u16 a = *atr++;
-      if (x == 0 || (a&0x07) != (o&0x07))
-        sv_catpvf (sv, "\x1b[3%dm", a&7);
-      if (x == 0 || (a&0x38) != (o&0x38))
-        sv_catpvf (sv, "\x1b[4%dm", (o&0x38)>>3);
-      if (x == 0 || (a&VTX_FLASH) != (o&VTX_FLASH))
-        sv_catpvf (sv, "\x1b[%sm", a&VTX_FLASH ? "7" : "");
+      if (x == 0 || (a & 0x07) != (o & 0x07))
+        sv_catpvf (sv, "\x1b[3%dm", a & 7);
+      if (x == 0 || (a & 0x38) != (o & 0x38))
+        sv_catpvf (sv, "\x1b[4%dm", (o & 0x38)>>3);
+      if (x == 0 || (a & VTX_FLASH) != (o & VTX_FLASH))
+        sv_catpvf (sv, "\x1b[%sm", a & VTX_FLASH ? "7" : "");
 
-      sv_catpvf (sv, "%c", a & VTX_G1 ? '×' : *chr);
+      sv_catpvf (sv, "%c", a & VTX_G1 ? 'x' : *chr);
 
       chr++;
       o = a;

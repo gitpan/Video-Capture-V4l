@@ -664,7 +664,7 @@ findmin(db,fr,start=0,count=0)
 
         do
           {
-            data = *((int *)src)++;
+            data = *((int *)src); src += sizeof (int);
 
             dst = SvPV_nolen (fr);
             efr = src + datasize;

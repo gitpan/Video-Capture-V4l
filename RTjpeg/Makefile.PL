@@ -11,6 +11,6 @@ codec/RTjpeg.c: codec/compose.sh
 	cd codec && . compose.sh
 
 codec/RTjpeg.o: codec/RTjpeg.c codec/RTjpeg.h
-	\$(CCCMD) -o \$@ \$<
+	\$(CCCMD) \$(CCCDLFLAGS) -o \$@ \$<
 EOF
 }

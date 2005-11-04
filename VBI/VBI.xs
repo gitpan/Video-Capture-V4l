@@ -271,33 +271,24 @@ static u16 unham16(u8 a, u8 b, u8 c)
    return d ^ (1 << (31 - 16*E + 8*D + 4*C + 2*B + A));
 }
 
-static unsigned char
-rev (unsigned char x)
-{
-  return ((x>>7)&1)<<0 |
-         ((x>>6)&1)<<1 |
-         ((x>>5)&1)<<2 |
-         ((x>>4)&1)<<3 |
-         ((x>>3)&1)<<4 |
-         ((x>>2)&1)<<5 |
-         ((x>>1)&1)<<6 |
-         ((x>>0)&1)<<7;
-}
+#define rev(byte) (invtab [(u8)(byte)])
 
 static SV *
-decoder_decode_vps (decoder *dec, u8 *data)
+decode_vps (u8 *data)
 {
   AV *av  = newAV ();
 
+  char name = rev (data[3]);
+
   av_push (av, newSViv (VBI_VPS));
-  av_push (av, newSVpvn (data+3, 1));
+  av_push (av, newSVpvn (&name, 1));
   av_push (av, newSViv (data[4] & 3)); /* "unknown", "stereo  ", "mono   ", "dual   " */
   /* ch, day, mon, hour, min */
-  av_push (av, newSViv (rev (data[ 4]) <<12 & 0xf000
-                      | rev (data[10])      & 0x00c0
-                      | rev (data[12]) <<10 & 0x0c00
-                      | rev (data[13]) << 2 & 0x0300
-                      | rev (data[13])      & 0x003f));
+  av_push (av, newSViv (data[ 4] <<12 & 0xf000
+                      | data[10]      & 0x00c0
+                      | data[12] <<10 & 0x0c00
+                      | data[13] << 2 & 0x0300
+                      | data[13]      & 0x003f));
   av_push (av, newSViv (rev (data[10]) >> 1 & 31));
   av_push (av, newSViv (rev (data[10]) << 3 & 8 | rev (data[11]) >> 5));
   av_push (av, newSViv (rev (data[11]) & 31));
@@ -308,7 +299,7 @@ decoder_decode_vps (decoder *dec, u8 *data)
 }
 
 static SV *
-decoder_decode_vt (decoder *dec, u8 *data)
+decode_vt (u8 *data)
 {
    AV *av  = newAV ();
    u8 mpag = unham8 (data[3], data[4]);
@@ -415,7 +406,7 @@ decoder_decode_other (decoder *dec)
 }
 
 static SV *
-decoder_decode_empty (decoder *dec)
+decode_empty ()
 {
    AV *av  = newAV ();
    av_push (av, newSViv (VBI_EMPTY));
@@ -501,7 +492,7 @@ decoder_decode (decoder *dec, UI y, u8 *line)
                         {
                           for (i = 3; i < 45; i++)
                             data[i] = get_byte (dec);
-                          return decoder_decode_vt (dec, data);
+                          return decode_vt (data);
                         }
                     }
                 }
@@ -519,7 +510,7 @@ decoder_decode (decoder *dec, UI y, u8 *line)
                     {
                       for (i = 2; i < 16; i++)
                         data[i] = get_byte_SE (dec);
-                      return decoder_decode_vps (dec, data);
+                      return decode_vps (data);
                     }
                 }
             }
@@ -553,7 +544,7 @@ decoder_decode (decoder *dec, UI y, u8 *line)
       dec->did_agc = did_agc;
 
       if (type & VBI_EMPTY)
-	return decoder_decode_empty (dec);
+	return decode_empty ();
     }
 
   return 0;
@@ -1234,6 +1225,7 @@ decode_field(field, types)
 	SV *	field
         unsigned int	types
         PPCODE:
+{
         UI lines = SvCUR(field) / VBI_BPL;
         UI line;
         decoder dec;
@@ -1247,11 +1239,19 @@ decode_field(field, types)
             if (sv)
               PUSHs (sv_2mortal (sv));
           }
+}
+
+SV *
+decode_vps(char *data)
+
+SV *
+decode_vt(char *data)
 
 void
 decode_vtpage(data)
 	SV *	data
         PPCODE:
+{
         u8  chr[VT_COLS*VT_LINES];
         u16 atr[VT_COLS*VT_LINES];
         UI lines;
@@ -1278,6 +1278,7 @@ decode_vtpage(data)
             PUSHs (sv_2mortal (newSVpvn (chr, VT_COLS*lines)));
             PUSHs (sv_2mortal (newRV_noinc ((SV*)av)));
           }
+}
 
 PROTOTYPES: DISABLE
 
@@ -1286,6 +1287,7 @@ decode_ansi(chr, atr)
 	SV *	chr
         SV *	atr
         PPCODE:
+{
         UI lines = SvCUR(chr) / VT_COLS;
         UI attr_i = 0;
         u8 *_chr = SvPV_nolen (chr);
@@ -1304,11 +1306,13 @@ decode_ansi(chr, atr)
             _chr += VT_COLS;
             attr_i += VT_COLS;
           }
+}
 
 unsigned int
 bcd2dec(bcd)
   	unsigned int bcd
         CODE:
+{
         UI digit = 1;
         RETVAL = 0;
         while (bcd)
@@ -1320,6 +1324,7 @@ bcd2dec(bcd)
             digit *= 10;
             bcd >>= 4;
           }
+}
 	OUTPUT:
         RETVAL
 

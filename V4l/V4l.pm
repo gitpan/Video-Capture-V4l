@@ -9,7 +9,7 @@ require DynaLoader;
 
 use Fcntl;
 
-$VERSION = 0.225;
+$VERSION = '0.9';
 
 @ISA = qw(Exporter DynaLoader);
 
@@ -180,11 +180,11 @@ sub new(;$) {
    sysopen $self->{handle},$device,O_RDWR or return;
    $self->{fd} = fileno ($self->{handle});
 
-   $self;
+   $self
 }
 
 sub fileno($) {
-   $_[0]->{fd};
+   $_[0]->{fd}
 }
 
 1;

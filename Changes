@@ -1,5 +1,13 @@
 Revision history for Perl extension Video::Capture::V4l.
 
+0.9   Fri Nov  4 22:20:53 CET 2005
+	- fix RTJpeg compilation flags.
+        - expose decode_vps and decode_vt subfunctions.
+        - fix CNI decoding.
+        - updated VPS_CNI and 8/30 format 1 and format 2 codes,
+          added X/26 codes, from TR-101-231 2005-10, and converted
+          to utf-8.
+
 0.225 Thu Mar  3 18:00:52 CET 2005
 	- change of contact address.
 

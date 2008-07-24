@@ -2,7 +2,7 @@ int RTjpeg_b2s(s16 *data, s8 *strm, u8 bt8)
 {
  int ci=1, co=1, tmp;
 
- (u8)strm[0]=(u8)(data[RTjpeg_ZZ[0]]>254) ? 254:((data[RTjpeg_ZZ[0]]<0)?0:data[RTjpeg_ZZ[0]]);
+ strm[0]=(u8)(data[RTjpeg_ZZ[0]]>254) ? 254:((data[RTjpeg_ZZ[0]]<0)?0:data[RTjpeg_ZZ[0]]);
  
  for(ci=1; ci<=bt8; ci++)
   if(data[RTjpeg_ZZ[ci]]>0)

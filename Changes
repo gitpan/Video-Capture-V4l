@@ -1,5 +1,8 @@
 Revision history for Perl extension Video::Capture::V4l.
 
+0.902 Thu Jul 24 22:54:34 CEST 2008
+	- fix another lvalue-cast isn't lvalue bug in rtjpeg.c
+
 0.901 Tue Jun  6 01:35:18 CEST 2006
 	- fix lvalue-cast isn't lvalue bug in rtjpeg.c
 
